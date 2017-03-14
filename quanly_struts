@@ -1,0 +1,133 @@
+package model.dao;
+
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.ArrayList;
+
+import model.bean.KhuVuc;
+
+public class DanhMucDiaDiemDAO {
+	DatabaseDAO db;
+
+	public DanhMucDiaDiemDAO() {
+		db = new DatabaseDAO();
+	}
+
+	/**
+	 * get danh sách khu vực
+	 * 
+	 * @param txtFind
+	 * @return ArrayList<KhuVuc>
+	 */
+
+	public ArrayList<KhuVuc> getDanhSachKhuVuc(String txtFind) {
+		txtFind = FormatData.FormatInputData(txtFind);
+		String sql = "select * from KHUVUC where MaKhuVuc like N'%" + txtFind
+				+ "' or TenKhuVuc like N'%" + txtFind + "%'";
+		ResultSet rs = db.getResultSet(sql);
+		ArrayList<KhuVuc> list = null;
+		try {
+			list = new ArrayList<KhuVuc>();
+			while (rs.next()) {
+				KhuVuc khuVuc = new KhuVuc();
+				khuVuc.setMaKhuVuc(rs.getInt("MaKhuVuc"));
+				khuVuc.setTenKhuVuc(FormatData.FormatOutputData(rs
+						.getString("TenKhuVuc")));
+
+				list.add(khuVuc);
+			}
+		} catch (SQLException e) {
+			return null;
+		} catch (Exception e) {
+			return null;
+		}
+		return list;
+	}
+
+	/**
+	 * Thêm danh mục địa điểm mới
+	 * 
+	 * @param tenDiaDiemMoi
+	 * @return true/false
+	 */
+
+	public boolean themDiaDiemMoi(String tenDiaDiemMoi) {
+
+		int maxID = getMaxID("MaKhuVuc", "KHUVUC");
+		maxID++;
+		String sql = "insert into KHUVUC values(" + maxID + ",N'"
+				+ tenDiaDiemMoi + "')";
+		try {
+			System.out.println("" + sql);
+			return db.updateData(sql);
+		} catch (Exception ex) {
+			ex.printStackTrace();
+		}
+		return false;
+	}
+
+	public int getMaxID(String columName, String tableName) {
+		String sql = "select " + columName + " " + " from " + tableName + " "
+				+ " where " + columName + " >= all (select " + columName
+				+ " from " + tableName + ")";
+		ResultSet rs = db.getResultSet(sql);
+		try {
+			int max = 0;
+			while (rs.next()) {
+				max = Integer.valueOf(rs.getString(1));
+			}
+			return max;
+		} catch (Exception ex) {
+			ex.printStackTrace();
+		}
+		return -1;
+	}
+
+	/**
+	 * xóa danh mục địa điểm được chọn từ quản trị viên
+	 * @param maKhuVuc
+	 * @return true/false
+	 */
+	
+	public boolean deleteDanhMucDiaDiem(int maKhuVuc) {
+		return db.updateData("delete from KHUVUC where MaKhuVuc=" + maKhuVuc
+				+ "");
+
+	}
+
+	/**
+	 * lấy tên danh mục khu vực
+	 * @param maKhuVucChinhSua
+	 * @return tenDiaDiem
+	 */
+	
+	public String getTenDiaDiem(String maKhuVucChinhSua) {
+		String sql = "select TenKhuVuc from KHUVUC where MaKhuVuc="
+				+ maKhuVucChinhSua + "";
+		ResultSet rs = db.getResultSet(sql);
+		String tenDiaDiem = "";
+		try {
+			while (rs.next()) {
+				tenDiaDiem = rs.getString(1);
+			}
+			return tenDiaDiem;
+		} catch (Exception ex) {
+			ex.printStackTrace();
+		}
+
+		return null;
+	}
+	
+	/**
+	 * Cập nhật tên địa điểm
+	 * @param maKhuVucChinhSua,tenDiaDiemMoi
+	 * @return true/false
+	 */
+	
+	public boolean capNhatTenDiaDiem(String maKhuVucChinhSua,
+			String tenDiaDiemMoi) {
+		String sql = "update KHUVUC set TenKhuVuc=N'" + tenDiaDiemMoi + "' "
+				+ " where MaKhuVuc=" + maKhuVucChinhSua;
+		return db.updateData(sql);
+	}
+}
